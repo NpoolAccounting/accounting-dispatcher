@@ -86,49 +86,46 @@ func (s *RegisterServer) Run() error {
 	return nil
 }
 
+// minerPledgeInput
+type MinerPledgeRequestInput struct {
+	account string `gorm:"column:Account"`
+}
+
 // 获取抵押接口
 func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, request *http.Request) (interface{}, string, int) {
 	// 接收请求参数
 	query := request.URL.Query()
 	// 账户
-	account := string(query["account"][0])
-	if account == "" {
-		return nil, "account is must", -3
+	id := string(query["account"][0])
+	if id == "" {
+		return nil, "account is must", -1
 	}
-
-	var input = types.MinerPledgeRequestInput{
-		Account: account,
-	}
-	var host string
-
+	var host = ""
 	// 获取Ip数组
 	resp, err := etcdcli.Get(accountingDomain)
-	if err != nil {
-		log.Errorf(log.Fields{}, "cannot get %v: %v", accountingDomain, err)
+	if resp == nil {
 		return nil, err.Error(), -1
 	}
 	var strs = ""
+	// TODO 分发服务
 	for i, v := range resp {
 		if 0 < i {
 			strs = fmt.Sprintf("%v,", strs)
 		}
-
-		//strs = fmt.Sprintf("%v%v", strs, string(v))
-		//var resp = "{\"IP\":\"191.168.1.4\",\"Port\":\"12345\"}"
 		var input = types.ServiceRegisterOutput{}
-		err := json.Unmarshal([]byte(string(v)), &input)
-		//lang, err := json.Marshal(resp)
+		fmt.Println("string(v):", string(v)[1:])
+		err := json.Unmarshal([]byte(string(v)[1:]), &input)
 		if err == nil {
-			fmt.Println("port", input.Port)
-			host = input.IP + input.Port
+			host = input.IP + ":" + input.Port
 			break
 		}
 	}
-
+	if host == "" {
+		return nil, "host is null", -1
+	}
 	resps, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(input).
-		Post(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI))
+		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI) + "?account=" + id)
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err.Error(), -1
@@ -142,10 +139,7 @@ func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, reques
 	if err != nil {
 		return nil, err.Error(), -1
 	}
-	output := types.MinerPledgeRequestOutput{}
-	body, _ := json.Marshal(apiResp.Body)
-	err = json.Unmarshal(body, &output)
-	return &output, err.Error(), 0
+	return apiResp.Body, "success", 0
 }
 
 // 某个时间段收益统计
@@ -157,16 +151,10 @@ func (s *RegisterServer) GetMinerDailyRewardRequest(writer http.ResponseWriter, 
 	// 初始高度0 出块时间 1598306400 后面每一个加30s 北京时间戳
 	startTime := string(query["startTime"][0])
 	endTime := string(query["endTime"][0])
-	var input = types.AccountTotalRewardRequestInput{
-		Account:   account,
-		StartTime: startTime,
-		EndTime:   endTime,
-	}
 
-	if input.Account == "" {
-		return nil, "account is must", -3
+	if account == "" {
+		return nil, "account is must", -1
 	}
-
 	var host string
 
 	// 获取Ip数组
@@ -176,44 +164,35 @@ func (s *RegisterServer) GetMinerDailyRewardRequest(writer http.ResponseWriter, 
 		return nil, err.Error(), -1
 	}
 	var strs = ""
+	// TODO 分发服务
 	for i, v := range resp {
 		if 0 < i {
 			strs = fmt.Sprintf("%v,", strs)
 		}
-
-		//strs = fmt.Sprintf("%v%v", strs, string(v))
-		//var resp = "{\"IP\":\"191.168.1.4\",\"Port\":\"12345\"}"
 		var input = types.ServiceRegisterOutput{}
-		err := json.Unmarshal([]byte(string(v)), &input)
-		//lang, err := json.Marshal(resp)
+		fmt.Println("string(v):", string(v)[1:])
+		err := json.Unmarshal([]byte(string(v)[1:]), &input)
 		if err == nil {
-			fmt.Println("port", input.Port)
-			host = input.IP + input.Port
+			host = input.IP + ":" + input.Port
 			break
 		}
 	}
-
+	if host == "" {
+		return nil, "host is null", -1
+	}
 	resps, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(input).
-		Post(fmt.Sprintf("http://%v%v", host, types.GetAccountInfoAPI))
+		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI) + "?account=" + account + "&startTime=" + startTime + "&endTime=" + endTime)
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err.Error(), -1
-	}
-
-	if resps.StatusCode() != 200 {
-		return nil, xerrors.Errorf("NON-200 return").Error(), -1
 	}
 
 	apiResp, err := httpdaemon.ParseResponse(resps)
 	if err != nil {
 		return nil, err.Error(), -1
 	}
-	output := types.AccountTotalRewardRequestOutput{}
-	body, _ := json.Marshal(apiResp.Body)
-	err = json.Unmarshal(body, &output)
-	return &output, err.Error(), 0
+	return apiResp.Body, "success", 0
 }
 
 // accountInfo
@@ -225,18 +204,11 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 	// 初始高度0 出块时间 1598306400 后面每一个加30s 北京时间戳
 	startTime := string(query["startTime"][0])
 	endTime := string(query["endTime"][0])
-	pageSizeStr := string(query["pageSize"][0]) // 分页大小
+	pageSize := string(query["pageSize"][0]) // 分页大小
 
-	currentPageStr := string(query["currentPage"][0]) // 当前第几页
-	var input = types.AccountDetailRequestInput{
-		Account:     account,
-		StartTime:   startTime,
-		EndTime:     endTime,
-		PageSize:    pageSizeStr,
-		CurrentPage: currentPageStr,
-	}
+	currentPage := string(query["currentPage"][0]) // 当前第几页
 
-	if input.Account == "" {
+	if account == "" {
 		return nil, "account is must", -3
 	}
 
@@ -249,26 +221,25 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 		return nil, err.Error(), -1
 	}
 	var strs = ""
+	// TODO 分发服务
 	for i, v := range resp {
 		if 0 < i {
 			strs = fmt.Sprintf("%v,", strs)
 		}
-		//strs = fmt.Sprintf("%v%v", strs, string(v))
-		//var resp = "{\"IP\":\"191.168.1.4\",\"Port\":\"12345\"}"
 		var input = types.ServiceRegisterOutput{}
-		err := json.Unmarshal([]byte(string(v)), &input)
-		//lang, err := json.Marshal(resp)
+		fmt.Println("string(v):", string(v)[1:])
+		err := json.Unmarshal([]byte(string(v)[1:]), &input)
 		if err == nil {
-			fmt.Println("port", input.Port)
-			host = input.IP + input.Port
+			host = input.IP + ":" + input.Port
 			break
 		}
 	}
-
+	if host == "" {
+		return nil, "host is null", -1
+	}
 	resps, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(input).
-		Post(fmt.Sprintf("http://%v%v", host, types.GetAccountInfoAPI))
+		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI) + "?account=" + account + "&startTime=" + startTime + "&endTime=" + endTime + "&pageSize=" + pageSize + "&currentPage=" + currentPage)
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err.Error(), -1
@@ -282,8 +253,5 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 	if err != nil {
 		return nil, err.Error(), -1
 	}
-	output := types.MinerInfoOutput{}
-	body, _ := json.Marshal(apiResp.Body)
-	err = json.Unmarshal(body, &output)
-	return &output, err.Error(), 0
+	return apiResp.Body, err.Error(), 0
 }
