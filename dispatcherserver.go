@@ -9,8 +9,10 @@ import (
 	httpdaemon "github.com/NpoolRD/http-daemon"
 	"golang.org/x/xerrors"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	_ "strings"
+	"time"
 	_ "time"
 )
 
@@ -86,11 +88,6 @@ func (s *RegisterServer) Run() error {
 	return nil
 }
 
-// minerPledgeInput
-type MinerPledgeRequestInput struct {
-	account string `gorm:"column:Account"`
-}
-
 // 获取抵押接口
 func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, request *http.Request) (interface{}, string, int) {
 	// 接收请求参数
@@ -106,23 +103,32 @@ func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, reques
 	if resp == nil {
 		return nil, err.Error(), -1
 	}
-	var strs = ""
 	// TODO 分发服务
+	var strs = ""
 	for i, v := range resp {
 		if 0 < i {
 			strs = fmt.Sprintf("%v,", strs)
 		}
-		var input = types.ServiceRegisterOutput{}
-		fmt.Println("string(v):", string(v)[1:])
-		err := json.Unmarshal([]byte(string(v)[1:]), &input)
-		if err == nil {
-			host = input.IP + ":" + input.Port
-			break
-		}
+		strs = fmt.Sprintf("%v%v", strs, string(v))
+	}
+	//ssname := "{\"result\":[{\"IP\":\"116.230.109.121\",\"Port\":\"7099\"}, {\"IP\":\"116.230.109.120\",\"Port\":\"7000\"}, {\"IP\":\"127.0.0.1\",\"Port\":\"7009\"}, {\"IP\":\"116.230.109.120\",\"Port\":\"7000\"}, {\"IP\":\"127.0.0.1\",\"Port\":\"7009\"}]}"
+	result := "{\"result\":[" + strs + "]}"
+	var resultMap map[string]interface{}
+	errrand := json.Unmarshal([]byte(result), &resultMap)
+	n := len(resultMap["result"].([]interface{}))
+	// 生成随机数
+	randNum := GenerateRangeNum(0, n-1)
+	if errrand == nil {
+		IP := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["IP"]
+		Port := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["Port"]
+		fmt.Println("select IP:", IP, ":", Port)
+		host = IP.(string) + ":" + Port.(string)
 	}
 	if host == "" {
 		return nil, "host is null", -1
 	}
+
+	// 获取接口参数
 	resps, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
 		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI) + "?account=" + id)
@@ -140,6 +146,14 @@ func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, reques
 		return nil, err.Error(), -1
 	}
 	return apiResp.Body, "success", 0
+}
+
+// 生成随机数
+func GenerateRangeNum(min, max int) int {
+	rand.Seed(time.Now().Unix())
+	randNum := rand.Intn(max - min)
+	randNum = randNum + min
+	return randNum
 }
 
 // 某个时间段收益统计
@@ -163,19 +177,26 @@ func (s *RegisterServer) GetMinerDailyRewardRequest(writer http.ResponseWriter, 
 		log.Errorf(log.Fields{}, "cannot get %v: %v", accountingDomain, err)
 		return nil, err.Error(), -1
 	}
-	var strs = ""
+
 	// TODO 分发服务
+	var strs = ""
 	for i, v := range resp {
 		if 0 < i {
 			strs = fmt.Sprintf("%v,", strs)
 		}
-		var input = types.ServiceRegisterOutput{}
-		fmt.Println("string(v):", string(v)[1:])
-		err := json.Unmarshal([]byte(string(v)[1:]), &input)
-		if err == nil {
-			host = input.IP + ":" + input.Port
-			break
-		}
+		strs = fmt.Sprintf("%v%v", strs, string(v))
+	}
+	result := "{\"result\":[" + strs + "]}"
+	var resultMap map[string]interface{}
+	errrand := json.Unmarshal([]byte(result), &resultMap)
+	n := len(resultMap["result"].([]interface{}))
+	// 生成随机数
+	randNum := GenerateRangeNum(0, n-1)
+	if errrand == nil {
+		IP := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["IP"]
+		Port := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["Port"]
+		fmt.Println("select IP:", IP, ":", Port)
+		host = IP.(string) + ":" + Port.(string)
 	}
 	if host == "" {
 		return nil, "host is null", -1
@@ -212,27 +233,32 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 		return nil, "account is must", -3
 	}
 
-	var host string
-
+	host := ""
 	// 获取Ip数组
 	resp, err := etcdcli.Get(accountingDomain)
 	if err != nil {
 		log.Errorf(log.Fields{}, "cannot get %v: %v", accountingDomain, err)
 		return nil, err.Error(), -1
 	}
-	var strs = ""
 	// TODO 分发服务
+	var strs = ""
 	for i, v := range resp {
 		if 0 < i {
 			strs = fmt.Sprintf("%v,", strs)
 		}
-		var input = types.ServiceRegisterOutput{}
-		fmt.Println("string(v):", string(v)[1:])
-		err := json.Unmarshal([]byte(string(v)[1:]), &input)
-		if err == nil {
-			host = input.IP + ":" + input.Port
-			break
-		}
+		strs = fmt.Sprintf("%v%v", strs, string(v))
+	}
+	result := "{\"result\":[" + strs + "]}"
+	var resultMap map[string]interface{}
+	errrand := json.Unmarshal([]byte(result), &resultMap)
+	n := len(resultMap["result"].([]interface{}))
+	// 生成随机数
+	randNum := GenerateRangeNum(0, n-1)
+	if errrand == nil {
+		IP := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["IP"]
+		Port := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["Port"]
+		fmt.Println("select IP:", IP, ":", Port)
+		host = IP.(string) + ":" + Port.(string)
 	}
 	if host == "" {
 		return nil, "host is null", -1
