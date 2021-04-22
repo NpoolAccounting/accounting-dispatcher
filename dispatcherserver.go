@@ -292,5 +292,5 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 	if err != nil {
 		return nil, err.Error(), -1
 	}
-	return apiResp.Body, err.Error(), 0
+	return apiResp.Body, "", 0
 }
