@@ -9,8 +9,8 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:                 "accounting-dispathcher",
-		Usage:                "accounting dispathcher service ",
+		Name:                 "accounting-dispatcher",
+		Usage:                "accounting dispatcher service ",
 		Version:              "0.1.0",
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{

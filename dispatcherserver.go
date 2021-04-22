@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/EntropyPool/entropy-logger"
-	types "github.com/NpoolAccounting/service-register/types"
+	types "github.com/NpoolAccounting/accounting-dispatcher/types"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	httpdaemon "github.com/NpoolRD/http-daemon"
 	"golang.org/x/xerrors"

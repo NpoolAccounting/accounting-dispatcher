@@ -5,3 +5,4 @@
 /.idea/vcs.xml
 /go.sum
 .idea
+vendor
