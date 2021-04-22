@@ -113,6 +113,7 @@ func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, reques
 		}
 		strs = fmt.Sprintf("%v%v", strs, string(v))
 	}
+	fmt.Println("strs:", strs)
 	//ssname := "{\"result\":[{\"IP\":\"116.230.109.121\",\"Port\":\"7099\"}, {\"IP\":\"116.230.109.120\",\"Port\":\"7000\"}, {\"IP\":\"127.0.0.1\",\"Port\":\"7009\"}, {\"IP\":\"116.230.109.120\",\"Port\":\"7000\"}, {\"IP\":\"127.0.0.1\",\"Port\":\"7009\"}]}"
 	result := "{\"result\":[" + strs + "]}"
 	var resultMap map[string]interface{}
@@ -120,7 +121,7 @@ func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, reques
 	n := len(resultMap["result"].([]interface{}))
 	// 生成随机数
 	randNum := 0
-	if n > 0 {
+	if n > 1 {
 		randNum = GenerateRangeNum(0, n-1)
 	}
 	//randNum := GenerateRangeNum(0, n-1)
@@ -198,7 +199,7 @@ func (s *RegisterServer) GetMinerDailyRewardRequest(writer http.ResponseWriter, 
 	n := len(resultMap["result"].([]interface{}))
 	// 生成随机数
 	randNum := 0
-	if n > 0 {
+	if n > 1 {
 		randNum = GenerateRangeNum(0, n-1)
 	}
 	if errrand == nil {
@@ -263,7 +264,7 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 	n := len(resultMap["result"].([]interface{}))
 	// 生成随机数
 	randNum := 0
-	if n > 0 {
+	if n > 1 {
 		randNum = GenerateRangeNum(0, n-1)
 	}
 	if errrand == nil {
