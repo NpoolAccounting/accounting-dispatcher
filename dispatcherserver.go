@@ -213,7 +213,7 @@ func (s *RegisterServer) GetMinerDailyRewardRequest(writer http.ResponseWriter, 
 	}
 	resps, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
-		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI) + "?account=" + account + "&startTime=" + startTime + "&endTime=" + endTime)
+		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerDailyRewardAPI) + "?account=" + account + "&startTime=" + startTime + "&endTime=" + endTime)
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err.Error(), -1
@@ -278,7 +278,7 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 	}
 	resps, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
-		Get(fmt.Sprintf("http://%v%v", host, types.GetMinerPledgeAPI) + "?account=" + account + "&startTime=" + startTime + "&endTime=" + endTime + "&pageSize=" + pageSize + "&currentPage=" + currentPage)
+		Get(fmt.Sprintf("http://%v%v", host, types.GetAccountInfoAPI) + "?account=" + account + "&startTime=" + startTime + "&endTime=" + endTime + "&pageSize=" + pageSize + "&currentPage=" + currentPage)
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err.Error(), -1
