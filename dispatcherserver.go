@@ -119,11 +119,10 @@ func (s *RegisterServer) GeMinerPledgeRequest(writer http.ResponseWriter, reques
 	var resultMap map[string]interface{}
 	errrand := json.Unmarshal([]byte(result), &resultMap)
 	n := len(resultMap["result"].([]interface{}))
+	// 随机种子
+	rand.Seed(time.Now().UnixNano())
 	// 生成随机数
-	randNum := 0
-	if n > 1 {
-		randNum = GenerateRangeNum(0, n-1)
-	}
+	randNum := rand.Intn(n) //生成0-n-1随机整数
 	//randNum := GenerateRangeNum(0, n-1)
 	if errrand == nil {
 		IP := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["IP"]
@@ -198,10 +197,11 @@ func (s *RegisterServer) GetMinerDailyRewardRequest(writer http.ResponseWriter, 
 	errrand := json.Unmarshal([]byte(result), &resultMap)
 	n := len(resultMap["result"].([]interface{}))
 	// 生成随机数
-	randNum := 0
-	if n > 1 {
-		randNum = GenerateRangeNum(0, n-1)
-	}
+	// 随机种子
+	rand.Seed(time.Now().UnixNano())
+	// 生成随机数
+	randNum := rand.Intn(n) //生成0-n-1随机整数
+	//randNum := GenerateRangeNum(0, n-1)
 	if errrand == nil {
 		IP := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["IP"]
 		Port := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["Port"]
@@ -262,11 +262,11 @@ func (s *RegisterServer) GetAccountInfoRequest(w http.ResponseWriter, request *h
 	var resultMap map[string]interface{}
 	errrand := json.Unmarshal([]byte(result), &resultMap)
 	n := len(resultMap["result"].([]interface{}))
+	// 随机种子
+	rand.Seed(time.Now().UnixNano())
 	// 生成随机数
-	randNum := 0
-	if n > 1 {
-		randNum = GenerateRangeNum(0, n-1)
-	}
+	randNum := rand.Intn(n) //生成0-n-1随机整数
+	//randNum := GenerateRangeNum(0, n-1)
 	if errrand == nil {
 		IP := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["IP"]
 		Port := resultMap["result"].([]interface{})[randNum].(map[string]interface{})["Port"]
